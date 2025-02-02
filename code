@@ -1,0 +1,42 @@
+#include <Servo.h>  // Inclui a biblioteca "Servo" para controlar o servo motor
+#define cooler 10  // Define 10 como o pino de controle do cooler (ventilador)
+Servo meuServ;  // Cria objeto "meuServ" para controlar o servo motor
+int buzzer = 8;  // Define 8 como o pino do buzzer (alarme sonoro)
+int freq = 150;  // Define a frequência do som do buzzer (150 Hz)
+
+void setup(){
+  Serial.begin(9600);  // Inicia a comunicação serial com o computador a 9600 bauds
+
+  pinMode(cooler, OUTPUT);  // Configura cooler como elemento de saída
+
+  meuServ.attach(9);  // Associa o servo motor ao pino 9
+  meuServ.write(0);  // Evitar que o servo não mude de posição(voltar a 0) à cada leiura de sensor
+
+  pinMode(buzzer, OUTPUT);  // Configura buzzer como elemento de saída (para acionar o som)
+}
+
+void loop(){
+  int estado_glp = analogRead(A0);  // Lê o valor analógico do sensor MQ-2 (conectado no pino A0)
+  Serial.print("Leitura sensor MQ-2: ");  // Exibe a leitura no monitor serial
+  Serial.println(estado_glp);  // Exibe cada leitura em uma linha
+  delay(100);  // Aguarda 100 ms para a próxima leitura
+
+  if(estado_glp > 5){  // Se a leitura do sensor for maior que 5 (indicando presença de gás ou fumaça)
+  	tone(buzzer, freq, 1000);  // Aciona o buzzer com uma frequência de 150 Hz por 1 segundo (SINALIZAR VAZAMENTO DE GÁS)
+  	//  (pino, frequência, duração)    
+  
+  	meuServ.write(90);  // Move o servo motor para 90 graus (FECHAR O REGISTRO DE GÁS)
+  	delay(1000);
+  
+  	digitalWrite(cooler, HIGH);  // Liga o cooler (DISPERSAR O GÁS)
+      
+  }
+  if(estado_glp <= 5) {
+  	meuServ.write(180);  // Se a leitura for baixa (não há gás), move o servo para 0 graus (ABRIR O REGISTRO DE GÁS)
+      
+  	digitalWrite(cooler, LOW);  // Desliga o cooler
+      
+  	noTone(buzzer);  // Desliga o buzzer (remove o som)
+  }
+  delay(2000);  // Aguarda 2 segundos antes de realizar a próxima leitura e ação
+}
